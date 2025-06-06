@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โหวตเลือกแบบเสื้อโรงเรียน</title>
+    <title>โพลสำรวจออกแบบเสื้อ SEM</title>
     
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,402 +14,386 @@
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     
-    <!-- Lucide Icons for modern icons -->
-    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide.js"></script>
-    <script src="https://unpkg.com/lucide-icons@latest/dist/lucide.min.js"></script>
-
+    <!-- Google Fonts for aesthetics -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        /* Using Google Fonts for a softer, more modern look */
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap');
+        /* Apply custom font and smooth scrolling */
         body {
-            font-family: 'IBM Plex Sans Thai', sans-serif;
-            background-color: #f0fdf4; /* A light green pastel background */
+            font-family: 'Kanit', sans-serif;
+            background-color: #fcfdfd;
+            scroll-behavior: smooth;
         }
-        .main-container {
-            background-image: linear-gradient(to bottom right, #fefce8, #dcfce7, #ccfbf1);
+        
+        /* Custom gradient background */
+        .gradient-bg {
+            background: linear-gradient(135deg, #fef9c3, #dcfce7, #ccfbf1);
         }
-        .form-input, .form-select {
-            @apply w-full px-4 py-3 bg-white bg-opacity-70 border border-green-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all duration-300 placeholder-gray-500;
+        
+        /* Styling for selected image */
+        .selected-image {
+            outline: 5px solid #fbbf24;
+            outline-offset: 4px;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.4);
         }
-        .image-choice {
-            @apply border-4 border-transparent rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105;
+
+        /* Image hover effect */
+        .image-vote-item:not(.selected-image):hover {
+            transform: scale(1.03);
         }
-        .image-choice.selected {
-            @apply border-yellow-400 scale-105 ring-4 ring-yellow-200;
+
+        /* Modal for image zoom */
+        #imageModal {
+            background-color: rgba(0,0,0,0.8);
         }
-        .submit-btn {
-            @apply w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300;
+        
+        /* Style for the chart container for responsiveness */
+        #chartContainer {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
         }
-        .progress-bar-bg {
-            @apply w-full bg-gray-200 rounded-full h-6 overflow-hidden;
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        .progress-bar-fill {
-            @apply bg-gradient-to-r from-green-400 to-teal-500 h-6 flex items-center justify-center text-xs font-medium text-white text-center p-0.5 leading-none rounded-full transition-all duration-500;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
-        .stat-card {
-            @apply bg-white bg-opacity-80 p-6 rounded-2xl shadow-md;
+        ::-webkit-scrollbar-thumb {
+            background: #fbbf24;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <div id="image-zoom-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden p-4">
-        <div class="relative">
-            <img id="zoomed-image" src="" class="max-w-full max-h-[90vh] rounded-lg" alt="Zoomed Image">
-            <button id="close-zoom" class="absolute -top-4 -right-4 bg-white text-black rounded-full h-10 w-10 flex items-center justify-center text-2xl font-bold">&times;</button>
-        </div>
-    </div>
+<body class="text-gray-700">
 
-    <div class="main-container max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-green-800 flex items-center justify-center gap-3">
-                <i data-lucide="award"></i>
-                โหวตเลือกแบบเสื้อกิจกรรม
-            </h1>
-            <p class="text-gray-600 mt-2">เลือกแบบที่นักเรียนชอบที่สุด</p>
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+        
+        <!-- Header -->
+        <header class="text-center mb-8 md:mb-12">
+            <div class="inline-block p-4 bg-white rounded-2xl shadow-md mb-4">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">โหวตเลือกแบบเสื้อกีฬาสี SEM</h1>
+            <p class="text-gray-500 mt-2">เลือกแบบที่ใช่ สไตล์ที่ชอบ</p>
         </header>
 
-        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Side: Voting Form -->
-            <div class="bg-white/50 p-6 rounded-2xl shadow-lg backdrop-blur-sm">
-                <form id="vote-form">
-                    <!-- Step 1: Image Selection -->
-                    <div class="mb-6">
-                        <h2 class="font-semibold text-xl text-gray-700 mb-4 flex items-center gap-2"><i data-lucide="image"></i>ขั้นตอนที่ 1: เลือกแบบเสื้อ</h2>
-                        <div id="image-options" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            <!-- Image options will be injected here by JS -->
-                        </div>
-                        <input type="hidden" name="choice" id="selected-choice" required>
-                    </div>
+        <!-- Form and Voting Section -->
+        <form id="voteForm" class="space-y-10">
 
-                    <!-- Step 2: Personal Information -->
-                    <div class="mb-6">
-                        <h2 class="font-semibold text-xl text-gray-700 mb-4 flex items-center gap-2"><i data-lucide="user-check"></i>ขั้นตอนที่ 2: กรอกข้อมูล</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label for="studentId" class="block text-sm font-medium text-gray-700 mb-1">เลขประจำตัว (5 หลัก)</label>
-                                <input type="text" id="studentId" name="studentId" class="form-input" placeholder="เช่น 12345" required maxlength="5" pattern="\d{5}">
-                            </div>
-                            <div>
-                                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
-                                <input type="text" id="firstName" name="firstName" class="form-input" placeholder="ชื่อจริง" required>
-                            </div>
-                            <div>
-                                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">นามสกุล</label>
-                                <input type="text" id="lastName" name="lastName" class="form-input" placeholder="นามสกุล" required>
-                            </div>
-                            <div>
-                                <label for="class" class="block text-sm font-medium text-gray-700 mb-1">ชั้น</label>
-                                <select id="class" name="class" class="form-select" required>
-                                    <option value="" disabled selected>-- เลือกชั้นเรียน --</option>
-                                    <option value="ม.1/1">ม.1/1</option>
-                                    <option value="ม.2/1">ม.2/1</option>
-                                    <option value="ม.3/1">ม.3/1</option>
-                                    <option value="ม.4/1">ม.4/1</option>
-                                    <option value="ม.5/1">ม.5/1</option>
-                                    <option value="ม.6/1">ม.6/1</option>
-                                </select>
-                            </div>
-                             <div class="sm:col-span-2">
-                                <label for="size" class="block text-sm font-medium text-gray-700 mb-1">ไซส์เสื้อ</label>
-                                <select id="size" name="size" class="form-select" required>
-                                    <option value="" disabled selected>-- เลือกขนาดเสื้อ --</option>
-                                    <option value="S">ไซส์ S (รอบอก 38 นิ้ว)</option>
-                                    <option value="M">ไซส์ M (รอบอก 40 นิ้ว)</option>
-                                    <option value="L">ไซส์ L (รอบอก 42 นิ้ว)</option>
-                                    <option value="XL">ไซส์ XL (รอบอก 44 นิ้ว)</option>
-                                    <option value="3L">ไซส์ 3L (รอบอก 46 นิ้ว)</option>
-                                    <option value="4L">ไซส์ 4L (รอบอก 48 นิ้ว)</option>
-                                    <option value="5L">ไซส์ 5L (รอบอก 50 นิ้ว)</option>
-                                    <option value="6L">ไซส์ 6L (รอบอก 52 นิ้ว)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Step 1: Image Selection -->
+            <div class="p-6 md:p-8 bg-white rounded-3xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                    ขั้นตอนที่ 1 : เลือกแบบเสื้อที่ชอบ (คลิกที่ภาพ)
+                </h2>
+                <div id="imageSelection" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                    <!-- Images will be inserted here by JavaScript -->
+                </div>
+                 <p class="text-center text-sm text-gray-400 mt-4">** สามารถคลิกที่ภาพเพื่อซูมดูขนาดใหญ่ได้ **</p>
+                <input type="hidden" id="selectedImage" name="selectedImage" required>
+            </div>
 
-                    <!-- Step 3: Submission -->
+            <!-- Step 2: User Information -->
+            <div class="p-6 md:p-8 bg-white rounded-3xl shadow-lg">
+                 <h2 class="text-2xl font-semibold mb-6 flex items-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    ขั้นตอนที่ 2 : กรอกข้อมูลผู้โหวต
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <h2 class="font-semibold text-xl text-gray-700 mb-4 flex items-center gap-2"><i data-lucide="send"></i>ขั้นตอนที่ 3: ส่งผลโหวต</h2>
-                        <button type="submit" class="submit-btn">
-                            <i data-lucide="check-circle"></i>
-                            <span>ยืนยันการโหวต</span>
-                        </button>
+                        <label for="studentId" class="font-medium text-gray-600">เลขประจำตัวนักเรียน (5 หลัก)</label>
+                        <input type="text" id="studentId" name="studentId" class="w-full mt-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-400 transition" placeholder="เช่น 12345" required maxlength="5" pattern="\d{5}">
                     </div>
-                </form>
-            </div>
-
-            <!-- Right Side: Results -->
-            <div id="results-section" class="space-y-8">
-                <!-- Overall Results Chart -->
-                <div class="stat-card">
-                    <h2 class="font-bold text-2xl text-green-800 mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3"></i>ผลโหวตโดยรวม</h2>
-                    <div class="h-80"><canvas id="resultsChart"></canvas></div>
-                </div>
-
-                <!-- Voting Progress -->
-                <div class="stat-card">
-                    <h2 class="font-bold text-2xl text-green-800 mb-4 flex items-center gap-2"><i data-lucide="pie-chart"></i>สถานะการโหวต</h2>
-                    <div id="progress-bars" class="space-y-3">
-                        <!-- Progress bars will be injected here -->
+                    <div>
+                        <label for="fullName" class="font-medium text-gray-600">ชื่อ - สกุล</label>
+                        <input type="text" id="fullName" name="fullName" class="w-full mt-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-400 transition" placeholder="เช่น เด็กชายใจดี มีคุณธรรม" required>
                     </div>
-                </div>
-
-                <!-- Size Summary Table -->
-                <div class="stat-card">
-                    <h2 class="font-bold text-2xl text-green-800 mb-4 flex items-center gap-2"><i data-lucide="shirt"></i>สรุปจำนวนตามไซส์เสื้อ</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-600">
-                            <thead class="text-xs text-green-700 uppercase bg-green-100">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 rounded-l-lg">ชั้น</th>
-                                    <th scope="col" class="px-2 py-3 text-center">S</th>
-                                    <th scope="col" class="px-2 py-3 text-center">M</th>
-                                    <th scope="col" class="px-2 py-3 text-center">L</th>
-                                    <th scope="col" class="px-2 py-3 text-center">XL</th>
-                                    <th scope="col" class="px-2 py-3 text-center">3L</th>
-                                    <th scope="col" class="px-2 py-3 text-center">4L</th>
-                                    <th scope="col" class="px-2 py-3 text-center">5L</th>
-                                    <th scope="col" class="px-2 py-3 text-center rounded-r-lg">6L</th>
-                                </tr>
-                            </thead>
-                            <tbody id="size-summary-table">
-                                <!-- Table rows will be injected here -->
-                            </tbody>
-                        </table>
+                    <div>
+                        <label for="className" class="font-medium text-gray-600">ระดับชั้น</label>
+                        <select id="className" name="className" class="w-full mt-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-400 transition" required>
+                            <option value="" disabled selected>-- เลือกระดับชั้น --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="shirtSize" class="font-medium text-gray-600">ขนาดไซส์เสื้อ</label>
+                        <select id="shirtSize" name="shirtSize" class="w-full mt-2 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-400 transition" required>
+                            <option value="" disabled selected>-- เลือกไซส์เสื้อ --</option>
+                        </select>
                     </div>
                 </div>
             </div>
-        </main>
 
-        <footer class="text-center mt-12 text-gray-500 text-sm">
-            <p>Developed with ❤️ for School Activities.</p>
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" class="bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out flex items-center justify-center mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    ยืนยันการโหวต
+                </button>
+            </div>
+        </form>
+
+        <!-- Divider -->
+        <hr class="my-12 border-dashed">
+
+        <!-- Results Section -->
+        <section id="resultsSection" class="space-y-10">
+            <h2 class="text-3xl font-bold text-center text-gray-800">ผลการโหวต ณ ปัจจุบัน</h2>
+
+            <!-- Vote Results Chart -->
+            <div class="p-6 md:p-8 bg-white rounded-3xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-violet-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                    คะแนนโหวตแต่ละแบบ
+                </h3>
+                <div id="chartContainer">
+                    <canvas id="voteChart"></canvas>
+                </div>
+            </div>
+            
+             <!-- Voting Status -->
+            <div class="p-6 md:p-8 bg-white rounded-3xl shadow-lg">
+                 <h3 class="text-2xl font-semibold mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    สถานะการโหวตแต่ละห้องเรียน
+                </h3>
+                <div id="classStatusContainer" class="space-y-4">
+                    <!-- Progress bars will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Size Summary Table -->
+            <div class="p-6 md:p-8 bg-white rounded-3xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM4 8h5v2H4V8z" clip-rule="evenodd" />
+                    </svg>
+                    ตารางสรุปจำนวนไซส์เสื้อ (แยกตามห้อง)
+                </h3>
+                <div class="overflow-x-auto">
+                    <table id="sizeSummaryTable" class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-gray-100 text-gray-600 uppercase text-sm">
+                            <!-- Header will be generated by JS -->
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                           <!-- Rows will be generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 pt-8 border-t border-gray-200">
+            <p class="text-gray-500 text-sm">โครงการห้องเรียนพิเศษวิทยาศาสตร์ ภาษาอังกฤษ และคณิตศาสตร์ : SEM</p>
         </footer>
     </div>
+    
+    <!-- Image Zoom Modal -->
+    <div id="imageModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" onclick="this.classList.add('hidden')">
+        <img id="zoomedImage" src="" alt="Zoomed Image" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+    </div>
+
 
     <script>
         // --- CONFIGURATION ---
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbysqJtNrGOo7IEFjQqkFKt-XId9tx2rd4uRp5o0EspB2vDvUP2VV2FjAkGrtCsF6wgU/exec';
-        const IMAGE_SOURCES = [
-            'https://img2.pic.in.th/pic/S__2596878.md.jpg',
-            'https://img5.pic.in.th/file/secure-sv1/S__2596876.md.jpg',
-            'https://img2.pic.in.th/pic/S__2596877.md.jpg',
-            'https://img5.pic.in.th/file/secure-sv1/S__2596875.md.jpg',
-            'https://img2.pic.in.th/pic/S__2596873.md.jpg'
+        const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysqJtNrGOo7IEFjQqkFKt-XId9tx2rd4uRp5o0EspB2vDvUP2VV2FjAkGrtCsF6wgU/exec';
+        const IMAGES = [
+            { id: 1, url: 'https://i.postimg.cc/K85HnRd1/S-2596873-0.jpg', name: 'แบบที่ 1'},
+            { id: 2, url: 'https://i.postimg.cc/WbgK1986/S-2596875-0.jpg', name: 'แบบที่ 2'},
+            { id: 3, url: 'https://i.postimg.cc/x1QZJKFr/S-2596876-0.jpg', name: 'แบบที่ 3'},
+            { id: 4, url: 'https://i.postimg.cc/PNQ2zRVg/S-2596877-0.jpg', name: 'แบบที่ 4'},
+            { id: 5, url: 'https://i.postimg.cc/Y4Fx4nmy/S-2596878-0.jpg', name: 'แบบที่ 5'},
         ];
-        const CLASS_TOTALS = {
-            'ม.1/1': 35, 'ม.2/1': 34, 'ม.3/1': 35,
-            'ม.4/1': 35, 'ม.5/1': 35, 'ม.6/1': 35
+        const CLASSES = ['ม.1/1', 'ม.2/1', 'ม.3/1', 'ม.4/1', 'ม.5/1', 'ม.6/1'];
+        const SIZES = {
+            'S': 'รอบอก 38 นิ้ว',
+            'M': 'รอบอก 40 นิ้ว',
+            'L': 'รอบอก 42 นิ้ว',
+            'XL': 'รอบอก 44 นิ้ว',
+            '3L': 'รอบอก 46 นิ้ว',
+            '4L': 'รอบอก 48 นิ้ว',
+            '5L': 'รอบอก 50 นิ้ว',
+            '6L': 'รอบอก 52 นิ้ว',
         };
-        const SIZES = ['S', 'M', 'L', 'XL', '3L', '4L', '5L', '6L'];
+        const CLASS_TOTALS = {
+            'ม.1/1': 35, 'ม.2/1': 34, 'ม.3/1': 35, 'ม.4/1': 35, 'ม.5/1': 35, 'ม.6/1': 35,
+        };
 
-        // --- DOM ELEMENTS ---
-        const form = document.getElementById('vote-form');
-        const imageOptionsContainer = document.getElementById('image-options');
-        const selectedChoiceInput = document.getElementById('selected-choice');
-        let resultsChart = null;
-        
+        let voteChart = null; // To hold the chart instance
+        let existingStudentIds = []; // To store IDs that have already voted
+
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            populateImageChoices();
-            setupEventListeners();
-            fetchResults(); // Fetch initial results on page load
+            populateImages();
+            populateDropdowns();
+            fetchAndDisplayResults();
+            
+            document.getElementById('voteForm').addEventListener('submit', handleFormSubmit);
         });
 
-        // --- FUNCTIONS ---
-
-        function populateImageChoices() {
-            IMAGE_SOURCES.forEach((src, index) => {
-                const choiceValue = index + 1;
-                const choiceDiv = document.createElement('div');
-                choiceDiv.className = 'image-choice';
-                choiceDiv.dataset.choice = choiceValue;
-
-                const img = document.createElement('img');
-                img.src = src;
-                img.alt = `แบบที่ ${choiceValue}`;
-                img.className = 'w-full h-auto object-cover';
-                img.onerror = () => { 
-                    img.src = `https://placehold.co/400x300/fefce8/333?text=Image+${choiceValue}+Error`;
-                    img.alt = `เกิดข้อผิดพลาดในการโหลดรูปภาพที่ ${choiceValue}`;
-                };
+        // --- POPULATE UI ELEMENTS ---
+        function populateImages() {
+            const container = document.getElementById('imageSelection');
+            container.innerHTML = '';
+            IMAGES.forEach(image => {
+                const div = document.createElement('div');
+                div.className = 'image-vote-item cursor-pointer group relative transition-transform duration-300 ease-in-out';
+                div.dataset.imageId = image.id;
                 
-                choiceDiv.appendChild(img);
-                imageOptionsContainer.appendChild(choiceDiv);
-            });
-        }
+                div.innerHTML = `
+                    <img src="${image.url}" alt="${image.name}" class="w-full h-auto object-cover rounded-2xl shadow-md group-hover:shadow-xl transition-shadow">
+                    <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                        <p class="text-white text-lg font-bold">${image.name}</p>
+                    </div>
+                `;
+                
+                // Click to select the image for voting
+                div.addEventListener('click', (e) => {
+                    e.stopPropagation(); // prevent triggering zoom when selecting
+                    selectImage(image.id, div);
+                });
+                
+                // Click on image to zoom
+                 div.querySelector('img').addEventListener('click', () => zoomImage(image.url));
 
-        function setupEventListeners() {
-            // Image selection
-            imageOptionsContainer.addEventListener('click', (e) => {
-                const choiceDiv = e.target.closest('.image-choice');
-                if (!choiceDiv) return;
-
-                document.querySelectorAll('.image-choice').forEach(div => div.classList.remove('selected'));
-                choiceDiv.classList.add('selected');
-                selectedChoiceInput.value = choiceDiv.dataset.choice;
-            });
-
-            // Form submission
-            form.addEventListener('submit', handleFormSubmit);
-
-            // Image Zoom
-            const modal = document.getElementById('image-zoom-modal');
-            const zoomedImage = document.getElementById('zoomed-image');
-            const closeBtn = document.getElementById('close-zoom');
-
-            imageOptionsContainer.addEventListener('click', (e) => {
-                if (e.target.tagName === 'IMG') {
-                    zoomedImage.src = e.target.src;
-                    modal.classList.remove('hidden');
-                }
-            });
-
-            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                }
+                container.appendChild(div);
             });
         }
         
-        function handleFormSubmit(event) {
-            event.preventDefault();
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-
-            // --- Validation ---
-            if (!data.choice) {
-                Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกแบบเสื้อก่อน', 'error');
-                return;
-            }
-            if (!/^\d{5}$/.test(data.studentId)) {
-                Swal.fire('ข้อผิดพลาด', 'กรุณากรอกเลขประจำตัว 5 หลักให้ถูกต้อง', 'error');
-                return;
-            }
-            if (!data.firstName || !data.lastName || !data.class || !data.size) {
-                 Swal.fire('ข้อผิดพลาด', 'กรุณากรอกข้อมูลให้ครบทุกช่อง', 'error');
-                return;
-            }
-
-            // --- Submission ---
-            Swal.fire({
-                title: 'กำลังบันทึกข้อมูล...',
-                text: 'กรุณารอสักครู่',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Using JSONP
-            const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-            window[callbackName] = function(response) {
-                handleServerResponse(response);
-                delete window[callbackName]; // Clean up
-                document.body.removeChild(script);
-            };
-
-            const script = document.createElement('script');
-            const params = new URLSearchParams({
-                ...data,
-                callback: callbackName,
-                action: 'save'
-            });
-            script.src = `${GAS_URL}?${params.toString()}`;
-            document.body.appendChild(script);
+        function zoomImage(url) {
+            document.getElementById('zoomedImage').src = url;
+            document.getElementById('imageModal').classList.remove('hidden');
         }
 
-        function handleServerResponse(response) {
-            if (response.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'บันทึกสำเร็จ!',
-                    text: 'ขอบคุณสำหรับการโหวต',
-                }).then(() => {
-                    form.reset();
-                    document.querySelectorAll('.image-choice').forEach(div => div.classList.remove('selected'));
-                    fetchResults();
-                });
+        function selectImage(id, element) {
+            // Remove selection from others
+            document.querySelectorAll('.image-vote-item').forEach(el => el.classList.remove('selected-image'));
+            // Add selection to the clicked one
+            element.classList.add('selected-image');
+            // Update hidden input
+            document.getElementById('selectedImage').value = id;
+        }
+
+        function populateDropdowns() {
+            const classSelect = document.getElementById('className');
+            CLASSES.forEach(c => {
+                classSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            const sizeSelect = document.getElementById('shirtSize');
+            for (const [size, desc] of Object.entries(SIZES)) {
+                sizeSelect.innerHTML += `<option value="${size}">${size} (${desc})</option>`;
+            }
+        }
+        
+        // --- DATA FETCHING & DISPLAY ---
+        function fetchAndDisplayResults() {
+             const callbackName = 'displayData';
+             const script = document.createElement('script');
+             script.src = `${APP_SCRIPT_URL}?action=getData&callback=${callbackName}`;
+             document.body.appendChild(script);
+             
+             // Cleanup script tag after it has loaded
+             script.onload = () => document.body.removeChild(script);
+             script.onerror = () => {
+                 document.body.removeChild(script);
+                 Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลผลโหวตได้', 'error');
+             };
+        }
+        
+        // This global function is called by the JSONP response
+        function displayData(data) {
+            if (data.status === 'success') {
+                const records = data.data;
+                existingStudentIds = records.map(r => r.studentId);
+                
+                updateVoteChart(records);
+                updateClassStatus(records);
+                updateSizeSummary(records);
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: response.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
-                });
+                 console.error('Error fetching data:', data.message);
+                 Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลผลโหวตได้', 'error');
             }
         }
         
-        function fetchResults() {
-             const callbackName = 'jsonp_results_callback_' + Math.round(100000 * Math.random());
-             window[callbackName] = function(response) {
-                if (response.success) {
-                    displayResults(response.data);
-                } else {
-                    console.error("Failed to fetch results:", response.message);
-                     Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดผลโหวตได้', 'error');
+        function updateVoteChart(records) {
+            const voteCounts = {};
+            IMAGES.forEach(img => voteCounts[img.id] = 0);
+            records.forEach(record => {
+                if(voteCounts.hasOwnProperty(record.vote)) {
+                    voteCounts[record.vote]++;
                 }
-                delete window[callbackName];
-                document.body.removeChild(script);
-            };
+            });
 
-            const script = document.createElement('script');
-            script.src = `${GAS_URL}?action=read&callback=${callbackName}`;
-            document.body.appendChild(script);
-        }
-
-        function displayResults(data) {
-            updateChart(data.voteCounts);
-            updateProgressBars(data.classCounts);
-            updateSizeTable(data.sizeCounts);
-        }
-
-        function updateChart(voteCounts) {
-            const ctx = document.getElementById('resultsChart').getContext('2d');
             const chartData = {
-                labels: IMAGE_SOURCES.map((_, i) => `แบบที่ ${i + 1}`),
+                labels: IMAGES.map(img => img.name),
                 datasets: [{
                     label: 'จำนวนโหวต',
-                    data: voteCounts,
+                    data: IMAGES.map(img => voteCounts[img.id]),
                     backgroundColor: [
                         'rgba(251, 191, 36, 0.6)',
-                        'rgba(163, 230, 53, 0.6)',
                         'rgba(52, 211, 153, 0.6)',
-                        'rgba(251, 146, 60, 0.6)',
-                        'rgba(34, 197, 94, 0.6)'
+                        'rgba(59, 130, 246, 0.6)',
+                        'rgba(249, 115, 22, 0.6)',
+                        'rgba(168, 85, 247, 0.6)'
                     ],
                     borderColor: [
-                        'rgba(251, 191, 36, 1)',
-                        'rgba(163, 230, 53, 1)',
-                        'rgba(52, 211, 153, 1)',
-                        'rgba(251, 146, 60, 1)',
-                        'rgba(34, 197, 94, 1)'
+                        'rgb(251, 191, 36)',
+                        'rgb(52, 211, 153)',
+                        'rgb(59, 130, 246)',
+                        'rgb(249, 115, 22)',
+                        'rgb(168, 85, 247)'
                     ],
                     borderWidth: 2,
-                    borderRadius: 12, // Rounded bars
+                    borderRadius: 15,
+                    borderSkipped: false,
                 }]
             };
 
-            if (resultsChart) {
-                resultsChart.data = chartData;
-                resultsChart.update();
+            const ctx = document.getElementById('voteChart').getContext('2d');
+            if (voteChart) {
+                voteChart.data = chartData;
+                voteChart.update();
             } else {
-                resultsChart = new Chart(ctx, {
+                voteChart = new Chart(ctx, {
                     type: 'bar',
                     data: chartData,
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        indexAxis: 'y',
                         scales: {
-                            y: {
+                            x: {
                                 beginAtZero: true,
                                 grid: {
-                                    color: 'rgba(0,0,0,0.05)'
-                                },
-                                ticks: {
-                                    stepSize: 1
+                                    display: false
                                 }
                             },
-                             x: {
+                            y: {
                                 grid: {
                                     display: false
                                 }
@@ -420,11 +404,8 @@
                                 display: false
                             },
                             tooltip: {
-                                backgroundColor: 'rgba(0,0,0,0.7)',
-                                titleFont: { size: 14 },
-                                bodyFont: { size: 12 },
-                                padding: 10,
-                                cornerRadius: 8,
+                                boxPadding: 5,
+                                cornerRadius: 10,
                             }
                         }
                     }
@@ -432,51 +413,155 @@
             }
         }
         
-        function updateProgressBars(classCounts) {
-            const container = document.getElementById('progress-bars');
-            container.innerHTML = ''; // Clear previous bars
+        function updateClassStatus(records) {
+            const container = document.getElementById('classStatusContainer');
+            container.innerHTML = ''; // Clear previous content
 
-            for (const className in CLASS_TOTALS) {
-                const total = CLASS_TOTALS[className];
-                const voted = classCounts[className] || 0;
-                const percentage = total > 0 ? ((voted / total) * 100).toFixed(1) : 0;
-                
-                const barHtml = `
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-base font-medium text-gray-700">${className}</span>
-                            <span class="text-sm font-medium text-gray-600">${voted} / ${total} คน</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${percentage}%">
-                                ${percentage}%
-                            </div>
-                        </div>
+            const votesByClass = {};
+            CLASSES.forEach(c => votesByClass[c] = 0);
+            records.forEach(r => {
+                if (votesByClass.hasOwnProperty(r.class)) {
+                    votesByClass[r.class]++;
+                }
+            });
+
+            CLASSES.forEach(c => {
+                const votedCount = votesByClass[c];
+                const total = CLASS_TOTALS[c];
+                const percentage = total > 0 ? (votedCount / total) * 100 : 0;
+
+                const progressElement = document.createElement('div');
+                progressElement.innerHTML = `
+                    <div class="flex justify-between mb-1">
+                        <span class="font-medium text-base text-gray-700">${c}</span>
+                        <span class="text-sm font-medium text-gray-500">${votedCount} / ${total} คน</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div class="bg-gradient-to-r from-green-300 to-sky-400 h-4 rounded-full" style="width: ${percentage}%"></div>
                     </div>
                 `;
-                container.innerHTML += barHtml;
-            }
+                container.appendChild(progressElement);
+            });
         }
+        
+        function updateSizeSummary(records) {
+            const table = document.getElementById('sizeSummaryTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            
+            // Clear previous table data
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            // Create summary object
+            const summary = {};
+            CLASSES.forEach(c => {
+                summary[c] = {};
+                Object.keys(SIZES).forEach(s => summary[c][s] = 0);
+            });
 
-        function updateSizeTable(sizeCounts) {
-            const tableBody = document.getElementById('size-summary-table');
-            tableBody.innerHTML = ''; // Clear previous data
+            // Populate summary
+            records.forEach(r => {
+                if (summary[r.class] && summary[r.class].hasOwnProperty(r.size)) {
+                    summary[r.class][r.size]++;
+                }
+            });
+            
+            // Create Header
+            let headerHtml = '<tr><th class="py-3 px-4">ระดับชั้น</th>';
+            Object.keys(SIZES).forEach(s => {
+                headerHtml += `<th class="py-3 px-4 text-center">${s}</th>`;
+            });
+            headerHtml += '</tr>';
+            thead.innerHTML = headerHtml;
 
-            for (const className in CLASS_TOTALS) {
-                const row = document.createElement('tr');
-                row.className = 'bg-white border-b hover:bg-green-50';
-                
-                let rowHtml = `<th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${className}</th>`;
-                SIZES.forEach(size => {
-                    const count = sizeCounts[className]?.[size] || 0;
-                    rowHtml += `<td class="px-2 py-4 text-center">${count}</td>`;
+            // Create Body
+            let bodyHtml = '';
+            CLASSES.forEach(c => {
+                bodyHtml += `<tr class="hover:bg-gray-50">`;
+                bodyHtml += `<td class="py-3 px-4 font-medium">${c}</td>`;
+                Object.keys(SIZES).forEach(s => {
+                    const count = summary[c][s] || 0;
+                    bodyHtml += `<td class="py-3 px-4 text-center">${count > 0 ? count : '-'}</td>`;
                 });
-
-                row.innerHTML = rowHtml;
-                tableBody.appendChild(row);
-            }
+                bodyHtml += `</tr>`;
+            });
+            tbody.innerHTML = bodyHtml;
         }
 
+        // --- FORM SUBMISSION ---
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const studentId = form.studentId.value;
+
+            // Validation
+            if (!form.selectedImage.value) {
+                Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกแบบเสื้อก่อน', 'warning');
+                return;
+            }
+            if (!form.checkValidity()) {
+                 Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลให้ครบทุกช่อง', 'warning');
+                 form.reportValidity();
+                 return;
+            }
+            
+            // Check if student ID has already voted
+            if (existingStudentIds.includes(studentId)) {
+                Swal.fire('โหวตซ้ำ', 'เลขประจำตัวนี้ได้ทำการโหวตไปแล้ว', 'error');
+                return;
+            }
+
+            // Show loading alert
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Prepare data for JSONP
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            formData.forEach((value, key) => params.append(key, value));
+            
+            const callbackName = 'submitCallback';
+            const script = document.createElement('script');
+            script.src = `${APP_SCRIPT_URL}?action=submitVote&callback=${callbackName}&${params.toString()}`;
+
+            document.body.appendChild(script);
+
+            script.onerror = () => {
+                 document.body.removeChild(script);
+                 Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง', 'error');
+            };
+        }
+
+        // Global callback for form submission
+        function submitCallback(response) {
+            // Cleanup the script tag
+            const scripts = document.querySelectorAll(`script[src*="submitCallback"]`);
+            scripts.forEach(s => s.parentElement.removeChild(s));
+
+            if (response.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'บันทึกข้อมูลสำเร็จ!',
+                    text: 'ขอบคุณสำหรับการร่วมโหวต',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    document.getElementById('voteForm').reset();
+                    document.querySelectorAll('.image-vote-item').forEach(el => el.classList.remove('selected-image'));
+                    fetchAndDisplayResults(); // Refresh data
+                });
+            } else {
+                 Swal.fire('เกิดข้อผิดพลาด', response.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            }
+        }
     </script>
+
 </body>
 </html>
