@@ -87,7 +87,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">โหวตเลือกแบบเสื้อกีฬาสี SEM</h1>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">โหวตเลือกแบบเสื้อโครงการห้องเรียนพิเศษ SEM</h1>
             <p class="text-gray-500 mt-2">เลือกแบบที่ใช่ สไตล์ที่ชอบ</p>
         </header>
 
@@ -453,14 +453,14 @@
             thead.innerHTML = '';
             tbody.innerHTML = '';
             
-            // Create summary object
+            // Create summary object for per-class counts
             const summary = {};
             CLASSES.forEach(c => {
                 summary[c] = {};
                 Object.keys(SIZES).forEach(s => summary[c][s] = 0);
             });
 
-            // Populate summary
+            // Populate per-class summary
             records.forEach(r => {
                 if (summary[r.class] && summary[r.class].hasOwnProperty(r.size)) {
                     summary[r.class][r.size]++;
@@ -475,7 +475,7 @@
             headerHtml += '</tr>';
             thead.innerHTML = headerHtml;
 
-            // Create Body
+            // Create Body rows for each class
             let bodyHtml = '';
             CLASSES.forEach(c => {
                 bodyHtml += `<tr class="hover:bg-gray-50">`;
@@ -486,7 +486,29 @@
                 });
                 bodyHtml += `</tr>`;
             });
-            tbody.innerHTML = bodyHtml;
+
+            // --- NEW: Calculate and create Total row ---
+            const totals = {};
+            Object.keys(SIZES).forEach(s => totals[s] = 0);
+            
+            // Sum up totals from the per-class summary
+            CLASSES.forEach(c => {
+                Object.keys(SIZES).forEach(s => {
+                    totals[s] += summary[c][s] || 0;
+                });
+            });
+
+            // Build the HTML for the total row
+            let totalRowHtml = `<tr class="bg-amber-100 font-bold text-gray-800 border-t-2 border-amber-200">`;
+            totalRowHtml += `<td class="py-3 px-4">รวมทั้งหมด</td>`;
+            Object.keys(SIZES).forEach(s => {
+                const totalCount = totals[s] || 0;
+                totalRowHtml += `<td class="py-3 px-4 text-center">${totalCount > 0 ? totalCount : '0'}</td>`;
+            });
+            totalRowHtml += `</tr>`;
+            
+            // Combine class rows and total row
+            tbody.innerHTML = bodyHtml + totalRowHtml;
         }
 
         // --- FORM SUBMISSION ---
@@ -496,6 +518,7 @@
             const studentId = form.studentId.value;
 
             // Validation
+
             if (!form.selectedImage.value) {
                 Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกแบบเสื้อก่อน', 'warning');
                 return;
