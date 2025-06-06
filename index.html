@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โหวตเลือกแบบเสื้อ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            color: #0056b3;
+            text-align: center;
+        }
+        .poll-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 30px;
+        }
+        .poll-option {
+            border: 5px solid transparent;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .poll-option img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .poll-option.selected {
+            border-color: #007bff;
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,123,255,0.3);
+        }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #studentId {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        #submitVote {
+            padding: 12px 25px;
+            border-radius: 5px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #submitVote:hover {
+            background-color: #218838;
+        }
+        #submitVote:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        /* Modal for Image Zoom */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .modal-close {
+            position: absolute;
+            top: 20px; right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📝 โพลล์สำรวจ: เลือกแบบเสื้อที่ใช่สำหรับคุณ!</h1>
+
+    <div class="poll-container" id="pollContainer">
+        </div>
+
+    <div class="form-container">
+        <label for="studentId">กรอกรหัสนักเรียน 5 หลัก:</label>
+        <input type="tel" id="studentId" placeholder="xxxxx" maxlength="5" pattern="\d{5}">
+        <button id="submitVote" disabled>กรุณาเลือกรูปภาพก่อน</button>
+    </div>
+
+    <div class="chart-container">
+        <h2>📊 ผลการโหวตล่าสุด</h2>
+        <canvas id="resultsChart"></canvas>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="zoomedImg">
+    </div>
+
+
+    <script>
+        // --- CONFIGURATION ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysqJtNrGOo7IEFjQqkFKt-XId9tx2rd4uRp5o0EspB2vDvUP2VV2FjAkGrtCsF6wgU/exec"; // ⚠️ PASTE YOUR DEPLOYED WEB APP URL HERE
+        const IMAGES = [
+            { id: 'shirt_1', url: 'https://img2.pic.in.th/pic/S__2596878.md.jpg' },
+            { id: 'shirt_2', url: 'https://img5.pic.in.th/file/secure-sv1/S__2596876.md.jpg' },
+            { id: 'shirt_3', url: 'https://img2.pic.in.th/pic/S__2596877.md.jpg' },
+            { id: 'shirt_4', url: 'https://img5.pic.in.th/file/secure-sv1/S__2596875.md.jpg' },
+            { id: 'shirt_5', url: 'https://img2.pic.in.th/pic/S__2596873.md.jpg' }
+        ];
+
+        // --- GLOBAL VARIABLES ---
+        let selectedImageId = null;
+        let chart;
+
+        // --- DOM ELEMENTS ---
+        const pollContainer = document.getElementById('pollContainer');
+        const studentIdInput = document.getElementById('studentId');
+        const submitButton = document.getElementById('submitVote');
+        const modal = document.getElementById('imageModal');
+        const zoomedImg = document.getElementById('zoomedImg');
+        const closeModal = document.querySelector('.modal-close');
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderImages();
+            setupEventListeners();
+            loadChartData();
+        });
+        
+        // --- FUNCTIONS ---
+
+        function renderImages() {
+            IMAGES.forEach(image => {
+                const optionDiv = document.createElement('div');
+                optionDiv.classList.add('poll-option');
+                optionDiv.dataset.id = image.id;
+
+                const imgElement = document.createElement('img');
+                imgElement.src = image.url;
+                imgElement.alt = `แบบเสื้อ ${image.id}`;
+
+                optionDiv.appendChild(imgElement);
+                pollContainer.appendChild(optionDiv);
+            });
+        }
+        
+        function setupEventListeners() {
+            // Image selection and zoom
+            pollContainer.addEventListener('click', (event) => {
+                const pollOption = event.target.closest('.poll-option');
+                if (!pollOption) return;
+
+                // Simple check to differentiate between selection and zoom intent
+                if (selectedImageId === pollOption.dataset.id) {
+                     // If clicking the selected image again, zoom it
+                    openModal(pollOption.querySelector('img').src);
+                } else {
+                    // Select new image
+                    handleImageSelection(pollOption);
+                }
+            });
+
+            // Input validation
+            studentIdInput.addEventListener('input', () => {
+                studentIdInput.value = studentIdInput.value.replace(/[^0-9]/g, '');
+            });
+
+            // Submit button
+            submitButton.addEventListener('click', handleSubmit);
+            
+            // Modal close events
+            closeModal.addEventListener('click', () => modal.style.display = 'none');
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        function handleImageSelection(selectedOption) {
+            document.querySelectorAll('.poll-option').forEach(opt => opt.classList.remove('selected'));
+            selectedOption.classList.add('selected');
+            selectedImageId = selectedOption.dataset.id;
+            submitButton.disabled = false;
+            submitButton.textContent = 'ยืนยันการโหวต';
+        }
+
+        function openModal(src) {
+            zoomedImg.src = src;
+            modal.style.display = 'flex';
+        }
+
+        function handleSubmit() {
+            const studentId = studentIdInput.value;
+
+            if (!selectedImageId) {
+                Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกรูปภาพที่ต้องการโหวต', 'error');
+                return;
+            }
+            if (!/^\d{5}$/.test(studentId)) {
+                Swal.fire('ข้อผิดพลาด', 'กรุณากรอกรหัสนักเรียน 5 หลักให้ถูกต้อง', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'กำลังบันทึกผลโหวต...',
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // JSONP Request
+            const callbackName = 'jsonpCallback_' + new Date().getTime();
+            const url = `${SCRIPT_URL}?action=vote&studentId=${studentId}&vote=${selectedImageId}&callback=${callbackName}`;
+            
+            window[callbackName] = function(data) {
+                handleServerResponse(data);
+                // Clean up
+                delete window[callbackName];
+                document.body.removeChild(document.getElementById(callbackName));
+            };
+            
+            const script = document.createElement('script');
+            script.id = callbackName;
+            script.src = url;
+            document.body.appendChild(script);
+        }
+
+        function handleServerResponse(data) {
+            if (data.status === 'success') {
+                Swal.fire('สำเร็จ!', 'บันทึกผลโหวตของคุณเรียบร้อยแล้ว', 'success');
+                loadChartData(); // Reload chart with new data
+            } else if (data.status === 'duplicate') {
+                Swal.fire('โหวตซ้ำ', 'รหัสนักเรียนนี้ได้ทำการโหวตไปแล้ว', 'warning');
+            } else {
+                Swal.fire('เกิดข้อผิดพลาด', data.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            }
+        }
+        
+        async function loadChartData() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getResults`);
+                const data = await response.json();
+                renderChart(data);
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลผลโหวตได้', 'error');
+            }
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            const labels = IMAGES.map(img => `แบบที่ ${img.id.split('_')[1]}`);
+            const voteCounts = IMAGES.map(img => data[img.id] || 0);
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'จำนวนโหวต',
+                        data: voteCounts,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 10, // This makes the bars have rounded corners
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'สรุปผลคะแนนโหวต'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
